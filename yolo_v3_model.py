@@ -315,7 +315,9 @@ class yolo_v3(tf.keras.Model):
         self.checkpoint_dir = checkpoint_dir
         
         # checkpoint filepath 
-        self.checkpoint_path = os.path.join(self.checkpoint_dir, model_name)
+        # self.checkpoint_path = os.path.join(self.checkpoint_dir, model_name)
+        self.checkpoint_path = os.path.join(self.checkpoint_dir, model_name + '.weights.h5')
+        
         
         # initialise darknet 53 attribute
         self.darknet_53 = darknet()

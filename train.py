@@ -14,6 +14,7 @@ Main function to train YOLO_V3 model
 # Train options
 TRAIN_SAVE_BEST_ONLY = True  # saves only best model according validation loss (True recommended)
 TRAIN_CLASSES = "thermographic_data/classes.txt"
+# checkpoint_path= "checkpoints/model_2"
 TRAIN_NUM_OF_CLASSES = len(read_class_names(TRAIN_CLASSES))
 TRAIN_MODEL_NAME = "model_2"
 TRAIN_ANNOT_PATH = "thermographic_data/train"
@@ -183,7 +184,7 @@ def main():
     writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
     validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
 
-    # instantiate train and test set
+    # yolo_v3_model = yolo_v3 train and test set
     trainset = Dataset(dataset_type='train', annot_path=TRAIN_ANNOT_PATH, batch_size=TRAIN_BATCH_SIZE,
                        train_input_size=TRAIN_INPUT_SIZE, strides=YOLO_STRIDES, classes_file_path=TRAIN_CLASSES,
                        anchors=YOLO_ANCHORS, anchor_per_scale=YOLO_ANCHOR_PER_SCALE,

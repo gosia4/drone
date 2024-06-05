@@ -13,11 +13,11 @@ Main function to train YOLO_V3 model
 
 # Train options
 TRAIN_SAVE_BEST_ONLY = True  # saves only best model according validation loss (True recommended)
-TRAIN_CLASSES = "thermographic_data/classes.txt"
+TRAIN_CLASSES = "drone/thermographic_data/classes.txt"
 # checkpoint_path= "checkpoints/model_2"
 TRAIN_NUM_OF_CLASSES = len(read_class_names(TRAIN_CLASSES))
 TRAIN_MODEL_NAME = "model_2"
-TRAIN_ANNOT_PATH = "thermographic_data/train"
+TRAIN_ANNOT_PATH = "drone/thermographic_data/train"
 TRAIN_LOGDIR = "log" + '/' + TRAIN_MODEL_NAME
 TRAIN_CHECKPOINTS_FOLDER = "checkpoints" + '/' + TRAIN_MODEL_NAME
 TRAIN_BATCH_SIZE = 4
@@ -31,7 +31,7 @@ TRAIN_DECAY = 0.8
 TRAIN_DECAY_STEPS = 50.0
 
 # TEST options
-TEST_ANNOT_PATH = "thermographic_data/validate"
+TEST_ANNOT_PATH = "drone/thermographic_data/validate"
 TEST_BATCH_SIZE = 4
 TEST_INPUT_SIZE = 416
 TEST_SCORE_THRESHOLD = 0.3

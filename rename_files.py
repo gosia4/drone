@@ -28,14 +28,11 @@ def rename_images(source_dir, target_dir, prefix="free_3_frame"):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    # List all files in the source directory
     files = [f for f in sorted(os.listdir(source_dir)) if os.path.isfile(os.path.join(source_dir, f))]
 
     count = 0
     for file_name in files:
-        # Define the new file name
         new_name = f"{prefix}_{count}.txt"
-        # Define the source and target file paths
         source_file = os.path.join(source_dir, file_name)
         target_file = os.path.join(target_dir, new_name)
 
@@ -46,7 +43,6 @@ def rename_images(source_dir, target_dir, prefix="free_3_frame"):
         count += 1
 
 
-# Example usage
 source_directory = r"C:\Users\gosia\OneDrive - vus.hr\Desktop\New folder\drone\thermographic_my_data_z_zerami\validate\labels\free_3"
 target_directory = r"C:\Users\gosia\OneDrive - vus.hr\Desktop\New folder\drone\thermographic_data\validate\labels\free_3"
 rename_images(source_directory, target_directory)

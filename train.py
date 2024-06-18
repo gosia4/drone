@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 import os
 import shutil
-import json
 import matplotlib.pyplot as plt
 from yolo_v3_model import yolo_v3
 from dataset import Dataset
@@ -13,11 +12,11 @@ Main function to train YOLO_V3 model
 """
 
 # Train options
-TRAIN_SAVE_BEST_ONLY = True  # saves only best model according validation loss (True recommended)
-TRAIN_CLASSES = "drone/thermographic_data/classes.txt"
+TRAIN_SAVE_BEST_ONLY = False  # saves only best model according validation loss (True recommended)
+TRAIN_CLASSES = "thermographic_data/classes.txt"
 TRAIN_NUM_OF_CLASSES = len(read_class_names(TRAIN_CLASSES))
 TRAIN_MODEL_NAME = "model_2"
-TRAIN_ANNOT_PATH = "drone/thermographic_data/train"
+TRAIN_ANNOT_PATH = "thermographic_data/train"
 TRAIN_LOGDIR = "log" + '/' + TRAIN_MODEL_NAME
 TRAIN_CHECKPOINTS_FOLDER = "checkpoints" + '/' + TRAIN_MODEL_NAME
 TRAIN_BATCH_SIZE = 4
@@ -25,13 +24,13 @@ TRAIN_INPUT_SIZE = 416
 TRAIN_FROM_CHECKPOINT = False  # "checkpoints/yolov3_custom"
 TRAIN_LR_INIT = 1e-4
 TRAIN_LR_END = 1e-6
-TRAIN_WARMUP_EPOCHS = 1
-TRAIN_EPOCHS = 10
+TRAIN_WARMUP_EPOCHS = 3
+TRAIN_EPOCHS = 30
 TRAIN_DECAY = 0.8
 TRAIN_DECAY_STEPS = 50.0
 
 # TEST options
-TEST_ANNOT_PATH = "drone/thermographic_data/validate"
+TEST_ANNOT_PATH = "thermographic_data/validate"
 TEST_BATCH_SIZE = 4
 TEST_INPUT_SIZE = 416
 TEST_SCORE_THRESHOLD = 0.3
@@ -95,7 +94,6 @@ def main():
             global_steps.assign_add(1)
 
             # update learning rate
-            # about warmup: https://arxiv.org/pdf/1812.01187.pdf&usg=ALkJrhglKOPDjNt6SHGbphTHyMcT0cuMJg
             if global_steps < warmup_steps:
 
                 lr = global_steps / warmup_steps * TRAIN_LR_INIT
@@ -104,13 +102,6 @@ def main():
 
                 lr = TRAIN_LR_END + 0.5 * (TRAIN_LR_INIT - TRAIN_LR_END) * (
                     (1 + tf.cos((global_steps - warmup_steps) / (total_steps - warmup_steps) * np.pi)))
-            # if global_steps.numpy() < 100:
-
-            #     lr = TRAIN_LR_INIT
-
-            # else:
-
-            #     lr = TRAIN_LR_INIT * pow(TRAIN_DECAY, (global_steps.numpy() / TRAIN_DECAY_STEPS))
 
             # assign learning rate to optimizer
             optimizer.learning_rate.assign(lr.numpy())
@@ -211,106 +202,91 @@ def main():
     yolo_v3_model = yolo_v3(num_of_anchor_bbox=YOLO_ANCHOR_PER_SCALE, classes=TRAIN_NUM_OF_CLASSES,
                             checkpoint_dir=TRAIN_CHECKPOINTS_FOLDER, model_name=TRAIN_MODEL_NAME)
 
-    # Zmienne do śledzenia strat i numeru epoki
-    start_epoch = 0
-    all_train_losses = []
-    all_val_losses = []
-
     # train from last saved checkpoint if true
     if TRAIN_FROM_CHECKPOINT:
-        if os.path.exists(yolo_v3_model.checkpoint_path + '.index'):
-            yolo_v3_model.load_weights(yolo_v3_model.checkpoint_path).expect_partial()
-            if os.path.exists(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'last_epoch.txt')):
-                with open(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'last_epoch.txt'), 'r') as f:
-                    start_epoch = int(f.read())
-            if os.path.exists(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'train_losses.json')):
-                with open(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'train_losses.json'), 'r') as f:
-                    all_train_losses = json.load(f)
-            if os.path.exists(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'val_losses.json')):
-                with open(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'val_losses.json'), 'r') as f:
-                    all_val_losses = json.load(f)
+        # load weights of last saved checkpoint
+        yolo_v3_model.load_weights(yolo_v3_model.checkpoint_path).expect_partial()
 
-    # initialise default adam optimiser
+    # initialise default adam optimise
     optimizer = tf.keras.optimizers.Adam(learning_rate=TRAIN_LR_INIT)
 
-    # initialise large best validation loss variable to track best_val_loss
+    # initialise large best validation loss varaible to track best_val_loss
     best_val_loss = np.inf
 
-    # iterate over number of epochs
-    for epoch in range(start_epoch, TRAIN_EPOCHS):
-        print(f"Starting epoch {epoch + 1}/{TRAIN_EPOCHS}")
-        epoch_train_losses = []
-        # iterate over image and target in trainset
+    batch_train_losses, batch_val_losses = [], []
+    train_losses, val_losses = [], []
+
+    # iterate over the number of epochs
+    for epoch in range(TRAIN_EPOCHS):
+
+        # initiate variable to store total training loss
+        total_loss = 0.0
+
+        # iterate over the number of batches
         for image_data, target in trainset:
-            # obtain metrics from train step for given image and target
             results = train_step(image_data, target)
+            batch_train_losses.append(results[-1])
 
-            # update corresponding losses
-            total_loss = results[5]
-            epoch_train_losses.append(total_loss)
+        train_losses.append(np.mean(batch_train_losses))
 
-        # intialise losses for validation to zero
-        epoch_val_losses = []
+        # print results per epoch
+        print(
+            f"Epoch: {epoch + 1:2.0f}, step: {results[0]:5.0f}, lr: {results[1]:.6f}, giou_loss: {results[2]:7.2f}, conf_loss: {results[3]:7.2f}, prob_loss: {results[4]:7.2f}, total_loss: {results[5]:7.2f}")
 
-        # iterate over valdiation testset
-        for image_data, target in testset:
-            # obtain losses from validation set
-            results = validate_step(image_data, target)
+        # add validation loss to tensorboard every epoch
+        if len(testset) > 0:
 
-            # update corresponding losses
-            total_loss = results[3]
-            epoch_val_losses.append(total_loss)
+            # initiate variable to store total validation loss
+            total_val_loss = 0.0
 
-        # calculate mean loss for the epoch
-        train_epoch_loss = np.mean(epoch_train_losses)
-        val_epoch_loss = np.mean(epoch_val_losses)
+            # iterate over validation data
+            for image_data, target in testset:
+                results = validate_step(image_data, target)
+                batch_val_losses.append(results[-1])
 
-        # print relevant metrics
-        print(f'epoch:{epoch + 1}, train_loss:{train_epoch_loss:.2f}, val_loss:{val_epoch_loss:.2f}')
+            val_losses.append(np.mean(batch_val_losses))
 
-        # save best validation if avg loss from current epoch is less than best known model
-        if TRAIN_SAVE_BEST_ONLY:
-            if val_epoch_loss < best_val_loss:
-                best_val_loss = val_epoch_loss
-                yolo_v3_model.save_weights(yolo_v3_model.best_checkpoint_path)
+            # compute average validation loss over epoch
+            ave_val_loss = total_val_loss / len(testset)
+
+            with validate_writer.as_default():
+                tf.summary.scalar("Validate_loss/total_val_loss", ave_val_loss, step=epoch)
+
+            validate_writer.flush()
+
+            # save model for best validation loss
+            if TRAIN_SAVE_BEST_ONLY and best_val_loss > ave_val_loss:
+
+                # update best validation loss
+                best_val_loss = ave_val_loss
+
+                # save best validation loss model
+                yolo_v3_model.save_weights(yolo_v3_model.checkpoint_path)
+                print(f"\nModel weights saved at epoch {epoch + 1}")
+            else:
+                epoch_checkpoint_path = os.path.join(TRAIN_CHECKPOINTS_FOLDER, f"epoch_{epoch + 1}.weights.h5")
+                yolo_v3_model.save_weights(epoch_checkpoint_path)
+                print(f"\nModel weights saved at epoch {epoch + 1}")
+
         else:
-            yolo_v3_model.save_weights(yolo_v3_model.checkpoint_path)
+            epoch_checkpoint_path = os.path.join(TRAIN_CHECKPOINTS_FOLDER, f"epoch_{epoch + 1}.weights.h5")
+            yolo_v3_model.save_weights(epoch_checkpoint_path)
+            print(f"\nModel weights saved at epoch {epoch + 1}")
+            # save model
+            # yolo_v3_model.save_weights(yolo_v3_model.checkpoint_path)
+            # print(f"\nModel weights saved at epoch {epoch+1}")
 
-        # append losses
-        all_train_losses.append(train_epoch_loss)
-        all_val_losses.append(val_epoch_loss)
-
-        # save current epoch number and losses to file
-        with open(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'last_epoch.txt'), 'w') as f:
-            f.write(str(epoch + 1))
-
-        with open(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'train_losses.json'), 'w') as f:
-            json.dump(all_train_losses, f)
-        with open(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'val_losses.json'), 'w') as f:
-            json.dump(all_val_losses, f)
-
-        # writing validate summary data
-        with validate_writer.as_default():
-            tf.summary.scalar("validate_loss/total_val", val_epoch_loss, step=epoch)
-            tf.summary.scalar("validate_loss/giou_val", results[0], step=epoch)
-            tf.summary.scalar("validate_loss/conf_val", results[1], step=epoch)
-            tf.summary.scalar("validate_loss/prob_val", results[2], step=epoch)
-        validate_writer.flush()
-
-        # print relevant data and metrics for validation
-        print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
-              format(results[0], results[1], results[2], val_epoch_loss))
-
-    # plot losses
+    # plot the training and validation loss over epochs
     plt.figure()
-    plt.plot(range(1, len(all_train_losses) + 1), all_train_losses, label='Train Loss')
-    plt.plot(range(1, len(all_val_losses) + 1), all_val_losses, label='Validation Loss')
+    plt.plot(train_losses, label='Training Loss')
+    plt.plot(val_losses, label='Validation Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
     plt.title('Training and Validation Loss')
-    plt.savefig(os.path.join(TRAIN_CHECKPOINTS_FOLDER, 'loss_plot.png'))
-    plt.show()
+
+    # save the plot to a file
+    plt.savefig('training_validation_loss.png')
 
 
 if __name__ == '__main__':

@@ -143,24 +143,6 @@ def konwertuj_wspolrzedne(plik_txt, output_folder, image_width, image_height):
         # Format YOLO: klasa środek_x środek_y szerokość wysokość
         yolo_wspolrzedne.append([int(klasa), x1_norm, y1_norm, szerokosc_norm, wysokosc_norm])
 
-        # Normalizacja współrzędnych do zakresu [0, 1] względem szerokości i wysokości obrazu
-        # x_min = min(x1, x2)
-        # x_max = max(x1, x2)
-        # y_min = min(y1, y2)
-        # y_max = max(y1, y2)
-        #
-        # # Obliczanie szerokości i wysokości prostokąta
-        # szerokosc = x_max - x_min
-        # wysokosc = y_max - y_min
-        #
-        # # Normalizacja współrzędnych do zakresu [0, 1] względem szerokości i wysokości obrazu
-        # x1_norm = x_min / image_width
-        # y1_norm = y_min / image_height
-        # szerokosc_norm = szerokosc / image_width
-        # wysokosc_norm = wysokosc / image_height
-        #
-        # # Format YOLO: klasa środek_x środek_y szerokość wysokość
-        # yolo_wspolrzedne.append([int(klasa), x1_norm, y1_norm, szerokosc_norm, wysokosc_norm])
 
     nazwa_pliku = os.path.splitext(os.path.basename(plik_txt))[0] + '.txt'
     with open(os.path.join(output_folder, nazwa_pliku), 'w') as f:

@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import os
+import cv2
 import shutil
 import matplotlib.pyplot as plt
 from yolo_v3_model import yolo_v3
@@ -48,7 +49,50 @@ YOLO_ANCHORS = [[[10, 13], [16, 30], [33, 23]],
                 [[30, 61], [62, 45], [59, 119]],
                 [[116, 90], [156, 198], [373, 326]]]
 
+images_folder = r"C:/Users/gosia/drone-detection/drone-detection/thermographic_data/train/images/free_1"
+labels_folder = r"C:/Users/gosia/drone-detection/drone-detection/thermographic_data/train/labels/free_1"
 
+
+def load_bounding_box_points_from_label_file(label_file):
+    points = []
+    with open(label_file, 'r') as file:
+        for line in file:
+            parts = line.strip().split()
+            if len(parts) == 5:
+                # Znormalizowane wartości cx, cy, width, height
+                cx, cy, w, h = float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4])
+                tl = (cx - w / 2, cy - h / 2)
+                tr = (cx + w / 2, cy - h / 2)
+                bl = (cx - w / 2, cy + h / 2)
+                br = (cx + w / 2, cy + h / 2)
+                points.extend([tl, tr, bl, br])
+    return points
+
+
+def display_images_with_crosses(images_folder, labels_folder):
+    for image_filename in os.listdir(images_folder):
+        if image_filename.endswith(".jpg"):
+            image_path = os.path.join(images_folder, image_filename)
+            label_filename = os.path.splitext(image_filename)[0] + ".txt"
+            label_path = os.path.join(labels_folder, label_filename)
+
+            image = cv2.imread(image_path)
+            if image is None:
+                continue
+
+            # Wczytaj współrzędne punktów z pliku etykiet
+            points = load_bounding_box_points_from_label_file(label_path)
+
+            # Przekształć znormalizowane współrzędne na współrzędne piksela
+            height, width, _ = image.shape
+            pixel_points = [(int(x * width), int(y * height)) for x, y in points]
+
+            for point in pixel_points:
+                cv2.drawMarker(image, point, (0, 0, 255), markerType=cv2.MARKER_CROSS, markerSize=20, thickness=2)
+
+            cv2.imshow(image_filename, image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 def main():
     """ main function """
 
@@ -215,6 +259,7 @@ def main():
 
     batch_train_losses, batch_val_losses = [], []
     train_losses, val_losses = [], []
+    # display_images_with_crosses(images_folder, labels_folder)
 
     # iterate over the number of epochs
     for epoch in range(TRAIN_EPOCHS):

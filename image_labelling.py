@@ -4,7 +4,7 @@ import numpy as np
 import os
 import glob
 
-# to działa, ale zapisuje w czterech linijkach
+# zapisuje w czterech linijkach
 def tag_obrazy(folder_path, output_folder):
     """
     Function to tag images in a folder and save coordinates to files.
@@ -17,32 +17,24 @@ def tag_obrazy(folder_path, output_folder):
         List containing coordinates of all drawn rectangles for all images.
     """
 
-    # List to store coordinates
     obszary_zainteresowania = []
 
-    # Get list of files in the folder
     pliki = os.listdir(folder_path)
 
-    # Iterate over files
     for plik in pliki:
-        # Check if the file is an image
         if plik.lower().endswith(('.png', '.jpg', '.jpeg')):
-            # Read the image
+
             img = cv2.imread(os.path.join(folder_path, plik))
 
-            # Call function to mark areas
             obszary = tag_klatki(img, plik)
 
-            # Add coordinates to the list
             obszary_zainteresowania.extend(obszary)
 
             # Save coordinates to a file
             nazwa_pliku = os.path.splitext(plik)[0] + '.txt'
             with open(os.path.join(output_folder, nazwa_pliku), 'w') as f:
                 for obszar in obszary:
-                    # Convert coordinates to a NumPy array before writing
                     obszar_array = np.array(obszar)
-                    # Write array as a single line separated by spaces
                     f.write(' '.join(map(str, obszar_array)) + ' ')
 
     return obszary_zainteresowania
@@ -72,7 +64,7 @@ def tag_klatki(img, nazwa_pliku):
                 # Append second point (x, y)
                 obszary.append([x, y])
 
-    cv2.namedWindow(nazwa_pliku)  # Ustawiamy nazwę okna jako nazwa pliku
+    cv2.namedWindow(nazwa_pliku)
     cv2.setMouseCallback(nazwa_pliku, zaznacz_obszar)
 
     while True:
@@ -101,7 +93,6 @@ def zapisz_do_pliku(obszary, output_folder):
     nazwa_pliku = f"{int(time.time())}.txt"
     with open(os.path.join(output_folder, nazwa_pliku), 'w') as f:
         for obszar in obszary:
-            # Zapisz wszystkie współrzędne w jednej linii
             f.write(' '.join(map(str, obszar)))
     # for obszar in obszary:
     #     # Utworzenie nazwy pliku
@@ -111,7 +102,6 @@ def zapisz_do_pliku(obszary, output_folder):
     #         f.write(' '.join(map(str, obszar)))
 
 
-# normalizacja współrzędnych:
 def konwertuj_wspolrzedne(plik_txt, output_folder, image_width, image_height):
     with open(plik_txt, 'r') as f:
         wspolrzedne = f.readlines()
@@ -125,22 +115,18 @@ def konwertuj_wspolrzedne(plik_txt, output_folder, image_width, image_height):
 
         x1, y1, x2, y2 = map(float, wsp.split())
 
-        # Obliczanie środka prostokąta
         srodek_x = (x1 + x2) / 2
         srodek_y = (y1 + y2) / 2
 
-        # Obliczanie szerokości i wysokości prostokąta
         szerokosc = abs(x2 - x1)
         wysokosc = abs(y2 - y1)
 
-        # Normalizacja współrzędnych do zakresu [0, 1] względem szerokości i wysokości obrazu
         x1_norm = srodek_x / image_width
         y1_norm = srodek_y / image_height
         szerokosc_norm = szerokosc / image_width
         wysokosc_norm = wysokosc / image_height
 
         klasa = 0
-        # Format YOLO: klasa środek_x środek_y szerokość wysokość
         yolo_wspolrzedne.append([int(klasa), x1_norm, y1_norm, szerokosc_norm, wysokosc_norm])
 
 
@@ -206,14 +192,11 @@ def konwertuj_wspolrzedne2(folder_path, output_folder, image_width, image_height
     Returns:
         None.
     """
-    # Utwórz folder docelowy, jeśli nie istnieje
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Pobierz listę plików zgodnych z danym wzorcem nazwy
     files = glob.glob(os.path.join(folder_path, "*.txt"))
 
-    # Iteruj przez wszystkie pliki
     for file_path in files:
         with open(file_path, 'r') as f:
             wspolrzedne = f.readlines()
@@ -226,27 +209,22 @@ def konwertuj_wspolrzedne2(folder_path, output_folder, image_width, image_height
                 continue
             x1, y1, x2, y2 = map(float, wsp.split())
 
-            # Obliczanie współrzędnych środka prostokąta
             srodek_x = (x1 + x2) / 2
             srodek_y = (y1 + y2) / 2
 
-            # Obliczanie szerokości i wysokości prostokąta
             szerokosc = abs(x2 - x1)
             wysokosc = abs(y2 - y1)
 
-            # Normalizacja współrzędnych do zakresu [0, 1] względem szerokości i wysokości obrazu
             x1_norm = round(srodek_x / image_width, 6)
             y1_norm = round(srodek_y / image_height, 6)
             szerokosc_norm = round(szerokosc / image_width, 6)
             wysokosc_norm = round(wysokosc / image_height, 6)
 
             klasa = 0
-            # Format YOLO: klasa środek_x środek_y szerokość wysokość
             yolo_wspolrzedne.append([int(klasa), x1_norm, y1_norm, szerokosc_norm, wysokosc_norm])
 
-        # Utwórz nazwę pliku YOLO
         nazwa_pliku = os.path.splitext(os.path.basename(file_path))[0] + '.txt'
-        # Zapisz współrzędne do pliku YOLO
+
         with open(os.path.join(output_folder, nazwa_pliku), 'w') as f:
             for wsp in yolo_wspolrzedne:
                 f.write(' '.join(map(str, wsp)) + '\n')

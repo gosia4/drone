@@ -1,8 +1,8 @@
 import cv2
 import os
 
-video_path = r"C:/Users/gosia/OneDrive - vus.hr/validate.mp4"
-output_folder = r"C:/Users/gosia/OneDrive - vus.hr/validate"
+video_path = r"ścieżka_do_nagrania_wideo.mp4"
+output_folder = r"Ścieżka_do_flderu_z_klatkami"
 
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
@@ -35,17 +35,3 @@ cap.release()
 
 print("Liczba zapisanych obrazów:", frame_count)
 
-
-
-# # do dzielenia mp4
-# from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
-#
-# input_file = r"C:/Users/gosia/OneDrive - vus.hr/przyciete_35_obrócone.mp4"
-# output_file = r"C:/Users/gosia/OneDrive - vus.hr/validate.mp4"
-#
-# # Czas początkowy w sekundach (np. 10 sekund)
-# start_time = 241
-#
-# # Czas końcowy w sekundach (np. 20 sekund)
-# end_time = 480
-# ffmpeg_extract_subclip(input_file, start_time, end_time, targetname=output_file)

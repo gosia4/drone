@@ -9,15 +9,10 @@ CLASSES = "thermographic_data/classes.txt"
 NUM_OF_CLASSES = len(read_class_names(CLASSES))
 MODEL_NAME = "model_2"
 CHECKPOINTS_FOLDER = "checkpoints" + "/" + MODEL_NAME
-# ANNOT_PATH            = "raw_videos/free_2.mp4"
-# OUTPUT_PATH           = 'predicted_videos/' + MODEL_NAME
-#
-# ANNOT_PATH = "C:/Users/gosia/OneDrive - vus.hr/flir_20240324T173352_no_audio.mp4"
-# ANNOT_PATH = "C:/Users/gosia/OneDrive - vus.hr/flir_20240324T171635_no_audio.mp4"
-ANNOT_PATH = "C:/Users/gosia/OneDrive - vus.hr/przyciete_35_7mb.mp4"
-OUTPUT_PATH = 'mojeNowe/' + MODEL_NAME
+ANNOT_PATH         = "raw_videos/free_2.mp4"
+OUTPUT_PATH        = 'predicted_videos/' + MODEL_NAME
 INPUT_SIZE = 416
-SCORE_THRESHOLD = 0.4 # było 0.8
+SCORE_THRESHOLD = 0.4 # 0.8
 IOU_THRESHOLD = 0.2 # 0.45
 
 # YOLO options
@@ -26,7 +21,7 @@ YOLO_IOU_LOSS_THRESH = 0.5
 YOLO_ANCHOR_PER_SCALE = 3
 YOLO_MAX_BBOX_PER_SCALE = 100
 YOLO_INPUT_SIZE = 416
-YOLO_BATCH_FRAMES = 3 #5
+YOLO_BATCH_FRAMES = 3 # 5
 YOLO_PREPROCESS_IOU_THRESH = 0.3
 YOLO_ANCHORS = [[[10, 13], [16, 30], [33, 23]],
                 [[30, 61], [62, 45], [59, 119]],

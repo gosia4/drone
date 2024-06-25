@@ -1,12 +1,11 @@
 import cv2
 import os
 
-input_folder = r"C:\Users\gosia\drone-detection\drone-detection\thermographic_data\validate\images\do_zmiany"
-output_folder = r"C:\Users\gosia\drone-detection\drone-detection\thermographic_data\validate\images\free_3"
+input_folder = r"ścieżka_do folderu_z_obrazami"
+output_folder = r"Ścieżka_do_folderu_wyjśćiowego"
 
 os.makedirs(output_folder, exist_ok=True)
 
-# Przejdź przez wszystkie pliki w folderze
 for filename in os.listdir(input_folder):
     if filename.endswith(".jpg") or filename.endswith(".png"):
         input_path = os.path.join(input_folder, filename)

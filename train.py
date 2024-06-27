@@ -49,9 +49,9 @@ YOLO_ANCHORS = [[[10, 13], [16, 30], [33, 23]],
                 [[30, 61], [62, 45], [59, 119]],
                 [[116, 90], [156, 198], [373, 326]]]
 
-images_folder = r"C:/Users/gosia/drone-detection/drone-detection/thermographic_data/train/images/free_1"
-labels_folder = r"C:/Users/gosia/drone-detection/drone-detection/thermographic_data/train/labels/free_1"
 
+images_folder = r"ścieżka_do_folderu_z_obrzami"
+labels_folder = r"ścieżka_do_folderu_z_otagowanymi_obrazami"
 
 def load_bounding_box_points_from_label_file(label_file):
     points = []
@@ -259,7 +259,7 @@ def main():
 
     batch_train_losses, batch_val_losses = [], []
     train_losses, val_losses = [], []
-    # display_images_with_crosses(images_folder, labels_folder)
+    display_images_with_crosses(images_folder, labels_folder)
 
     # iterate over the number of epochs
     for epoch in range(TRAIN_EPOCHS):
